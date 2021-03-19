@@ -8,6 +8,7 @@ using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.MessageBox;
 
 namespace tictactone3x3
 {
@@ -19,9 +20,13 @@ namespace tictactone3x3
         //"поля" с отметками ходов
         public static int[,] littleMap = new int [3, 3];
 
-        public static int[,] winComb = new int[5, 5];
+        public static int[,] winComb = new int[2, 2]; //начальная и конечная точка выйгрышной комбинации 
+
+        public static int[] countWin = new int[2] {0,0};
         //переменная определяет чей сейчас ход: true - крестики, false - нолики
-        bool turn = true;
+        public bool turn = true;
+        public bool win = false;
+        public bool isPlaying = false;
 
 
         public Form1()
@@ -38,37 +43,46 @@ namespace tictactone3x3
                 g.DrawLine(new Pen(Color.Black, 2f), i, xstart, i, 200);
                 g.DrawLine(new Pen(Color.Black, 2f), 200, i, ystart, i);
             }
-
+            
             //рисуем крестик/нолик, если клик мышкой был
-            for (int i = 0; i < 3; i++)
+            if (isPlaying)
             {
-                for ( int j = 0; j < 3; j++)
+                for (int i = 0; i < 3; i++)
                 {
-                    if (littleMap[i,j]==1)
+                    for ( int j = 0; j < 3; j++)
                     {
-                        g.DrawLine(new Pen(Color.Black, 2f), xstart + 5 + i * step, ystart + 5 + j * step, xstart - 5 + (i + 1) * step, ystart + 5 + j * step + 40);
-                        g.DrawLine(new Pen(Color.Black, 2f), xstart + 5 + i * step, ystart + 5 + j * step + 40, xstart + 5 + i * step +40, ystart + 5 + j * step );
+                        if (littleMap[i,j]==1)
+                        {
+                            g.DrawLine(new Pen(Color.Black, 2f), xstart + 5 + i * step, ystart + 5 + j * step,
+                                xstart - 5 + (i + 1) * step, ystart + 5 + j * step + 40);
+                            g.DrawLine(new Pen(Color.Black, 2f), xstart + 5 + i * step, ystart + 5 + j * step + 40,
+                                xstart + 5 + i * step + 40, ystart + 5 + j * step);
+
+                        }
+                        if (littleMap[i, j] == 2)
+                        {
+                            g.DrawEllipse(new Pen(Color.Red, 2f), xstart + 5 + i * step, ystart + 5 + j * step, 40, 40);
                         
-                    }
-                    if (littleMap[i, j] == 2)
-                    {
-                        g.DrawEllipse(new Pen(Color.Red, 2f), xstart + 5 + i * step, ystart + 5 + j * step, 40, 40);
-                        
+                        }
                     }
                 }
             }
-
-
-            
+            if (win)
+            {
+                g.DrawLine(new Pen(Color.Orange, 5f), xstart + 25 + winComb[0, 0] * step, ystart + 25 + winComb[1, 0] * step, 
+                                                            xstart + 25 + winComb[0, 1] * step, ystart + 25 + winComb[1, 1]);
+            }
         }
 
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
-                for(int j = 0; j < 3; j++)
+                for(var j = 0; j < 3; j++)
                 {
-                    if ((e.X > xstart + i * step) && (e.X < xstart + (i + 1) * step) && (e.Y > ystart + j * step) 
+                    if ((e.X > xstart + i * step) 
+                        && (e.X < xstart + (i + 1) * step) 
+                        && (e.Y > ystart + j * step) 
                         && (e.Y < ystart + (j + 1) * step))
                     {
                         if ((littleMap[i,j]!=1)&& (littleMap[i, j] != 2))
@@ -89,36 +103,69 @@ namespace tictactone3x3
                             MessageBox.Show("Клетка занята, выберите другую!");
                         }
                     }
-                    if (checkWin(1))
+                    if (CheckWin(1))
                     {
-                        MessageBox.Show("Победа 1 игрока");
-                    
+                        isPlaying = false;
+                        label3.Text = "Победа 1 игрока";
+                        button1.Text = "Играсть снова";
+                        button1.BackColor = Color.Gold;
+                        label1.Text = (++countWin[1]).ToString();
+
                     }
-                    if (checkWin(2)) MessageBox.Show("Победа 2 игрока");
-                    
+                    if (CheckWin(2)) 
+                    {
+                        isPlaying = false;
+                        label3.Text = "Победа 1 игрока";
+                        button1.Text = "Играсть снова";
+                        button1.BackColor = Color.Gold;
+                        label2.Text = (++countWin[2]).ToString();
+
+                    }
                     Invalidate();
                 }
                 
             }
         }
         
-        private static bool checkWin(int c)
+        private static bool CheckWin(int c)
         {
-            for (int i = 0; i < 3; i++) 
+            for (var i = 0; i < 3; i++) 
             {
-                if (checkLine(0, i, 1, 0, c)) return true;   // проверим линию по y
-                if(checkLine(i, 0, 0, 1, c)) return true;   // проверим линию по х 
+                if (CheckLine(0, i, 1, 0, c)) return true;   // проверим линию по y
+                if(CheckLine(i, 0, 0, 1, c)) return true;   // проверим линию по х 
             }
-            if (checkLine(0, 0, 1, 1,  c)) return true;  // проверим по диагонали х -у 
-            if (checkLine(0, 2, 1, -1,  c)) return true;  // проверим по диагонали х -у 
+            if (CheckLine(0, 0, 1, 1,  c)) return true;  // проверим по диагонали х -у 
+            if (CheckLine(0, 2, 1, -1,  c)) return true;  // проверим по диагонали х -у 
             return false;
         }
         
         // проверка линии
-        private static bool checkLine(int x, int y, int vx, int vy, int c)
+        private static bool CheckLine(int x, int y, int vx, int vy, int c)
         {
-            for (int i = 0; i < 3; i++) if (littleMap[(y + i * vy),(x + i * vx)] != c) return false;   // проверим одинаковые-ли символы в ячейка
+            for (var i = 0; i < 3; i++) if (littleMap[(y + i * vy),(x + i * vx)] != c) return false; // проверим одинаковые-ли символы в ячейка
+            
             return true;
+        }
+
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            isPlaying = true;
+            if (win)
+            {
+                for (var i = 0; i < 3; i++) //Очистить поле 
+                {
+                    for (var j = 0; j < 3; j++)
+                    {
+                        littleMap[i, j] = 0;
+                    }
+                } 
+            }
+            //for (var i = 0; i < 3;i++) Array.Clear(littleMap[i]);
+            
+            button1.Text = "Идет игра";
+            button1.BackColor = Color.Chartreuse;
+            Invalidate();
         }
     }
 }
