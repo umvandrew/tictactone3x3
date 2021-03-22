@@ -20,12 +20,11 @@ namespace tictactone3x3
         //"поля" с отметками ходов
         public static int[,] littleMap = new int [3, 3];
 
-        public static int[,] winComb = new int[2, 2]; //начальная и конечная точка выйгрышной комбинации 
+        public static int[,] winComb = new int[3, 2]; //начальная и конечная точка выйгрышной комбинации 
 
         public static int[] countWin = new int[2] {0,0};
         //переменная определяет чей сейчас ход: true - крестики, false - нолики
         public bool turn = true;
-        public bool win = false;
         public bool isPlaying = false;
 
 
@@ -67,61 +66,67 @@ namespace tictactone3x3
                     }
                 }
             }
-            if (win)
+            for (int c = 1; c <= 2 ; c++)
             {
-                g.DrawLine(new Pen(Color.Orange, 5f), xstart + 25 + winComb[0, 0] * step, ystart + 25 + winComb[1, 0] * step, 
-                                                            xstart + 25 + winComb[0, 1] * step, ystart + 25 + winComb[1, 1]);
+                if (CheckWin(c))
+                {
+                    g.DrawLine(new Pen(Color.Orange, 5f), xstart + 25 + winComb[0, 0] * step, ystart + 25 + winComb[0, 1] * step, 
+                        xstart + 25 + winComb[2, 0] * step, ystart + 25 + winComb[2, 1]);
+                    for (var i = 0; i < 3; i++) //Очистить поле 
+                    {
+                        for (var j = 0; j < 3; j++)
+                        {
+                            littleMap[i, j] = 0;
+                        }
+                    }
+                    countWin[c-1] += 1;
+                    isPlaying = false;
+                    turn = true;
+                    MessageBox.Show("Победа"+c+" игрока") ;
+                    button1.Text = "Играсть снова";
+                    button1.BackColor = Color.Gold;
+                    if (c == 1) textBox1.Text = (countWin[0]).ToString();
+                    if (c == 2) textBox2.Text = (countWin[1]).ToString();
+
+                }
             }
+            
         }
 
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
-            for (var i = 0; i < 3; i++)
+            if (isPlaying)
             {
-                for(var j = 0; j < 3; j++)
+                for (var i = 0; i < 3; i++)
                 {
-                    if ((e.X > xstart + i * step) 
-                        && (e.X < xstart + (i + 1) * step) 
-                        && (e.Y > ystart + j * step) 
-                        && (e.Y < ystart + (j + 1) * step))
+                    for (var j = 0; j < 3; j++)
                     {
-                        if ((littleMap[i,j]!=1)&& (littleMap[i, j] != 2))
+                        if ((e.X > xstart + i * step)
+                            && (e.X < xstart + (i + 1) * step)
+                            && (e.Y > ystart + j * step)
+                            && (e.Y < ystart + (j + 1) * step))
                         {
-                            if (turn)
+                            if ((littleMap[i, j] != 1) && (littleMap[i, j] != 2))
                             {
-                                littleMap[i, j] = 1;
-                                turn = false;
+                                if (turn)
+                                {
+                                    littleMap[i, j] = 1;
+                                    turn = false;
+                                }
+                                else if (turn == false)
+                                {
+                                    littleMap[i, j] = 2;
+                                    turn = true;
+                                }
                             }
-                            else if (turn == false)
+                            else
                             {
-                                littleMap[i, j] = 2;
-                                turn = true;
+                                MessageBox.Show("Клетка занята, выберите другую!");
                             }
                         }
-                        else
-                        {
-                            MessageBox.Show("Клетка занята, выберите другую!");
-                        }
-                    }
-                    if (CheckWin(1))
-                    {
-                        isPlaying = false;
-                        label3.Text = "Победа 1 игрока";
-                        button1.Text = "Играсть снова";
-                        button1.BackColor = Color.Gold;
-                        label1.Text = (++countWin[1]).ToString();
 
+                        Invalidate();
                     }
-                    if (CheckWin(2)) 
-                    {
-                        isPlaying = false;
-                        label3.Text = "Победа 1 игрока";
-                        button1.Text = "Играсть снова";
-                        button1.BackColor = Color.Gold;
-                        label2.Text = (++countWin[2]).ToString();
-
-                    }
-                    Invalidate();
                 }
                 
             }
@@ -142,8 +147,16 @@ namespace tictactone3x3
         // проверка линии
         private static bool CheckLine(int x, int y, int vx, int vy, int c)
         {
-            for (var i = 0; i < 3; i++) if (littleMap[(y + i * vy),(x + i * vx)] != c) return false; // проверим одинаковые-ли символы в ячейка
-            
+            for (var i = 0; i < 3; i++)
+            {
+                if (littleMap[(y + i * vy), (x + i * vx)] == c)
+                {
+                    winComb[i, 0] = (y + i * vy);
+                    winComb[i, 1] = (x + i * vx);
+                }
+
+                if (littleMap[(y + i * vy), (x + i * vx)] != c) return false; // проверим одинаковые-ли символы в ячейки
+            }
             return true;
         }
 
@@ -151,18 +164,6 @@ namespace tictactone3x3
         private void button1_Click(object sender, EventArgs e)
         {
             isPlaying = true;
-            if (win)
-            {
-                for (var i = 0; i < 3; i++) //Очистить поле 
-                {
-                    for (var j = 0; j < 3; j++)
-                    {
-                        littleMap[i, j] = 0;
-                    }
-                } 
-            }
-            //for (var i = 0; i < 3;i++) Array.Clear(littleMap[i]);
-            
             button1.Text = "Идет игра";
             button1.BackColor = Color.Chartreuse;
             Invalidate();
