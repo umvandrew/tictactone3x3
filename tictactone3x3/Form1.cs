@@ -27,6 +27,7 @@ namespace tictactone3x3
         public bool turn = true;
         public bool isPlaying = false;
 
+        public static int winx, winy, winvx, winvy;
 
         public Form1()
         {
@@ -66,31 +67,122 @@ namespace tictactone3x3
                     }
                 }
             }
+            
+            //проверка на победу 
             for (int c = 1; c <= 2 ; c++)
             {
                 if (CheckWin(c))
                 {
-                    g.DrawLine(new Pen(Color.Orange, 5f), xstart + 25 + winComb[0, 0] * step, ystart + 25 + winComb[0, 1] * step, 
-                        xstart + 25 + winComb[2, 0] * step, ystart + 25 + winComb[2, 1]);
-                    for (var i = 0; i < 3; i++) //Очистить поле 
-                    {
-                        for (var j = 0; j < 3; j++)
-                        {
-                            littleMap[i, j] = 0;
-                        }
-                    }
+                    g.DrawLine(new Pen(Color.Orange, 5f), xstart + 25 + (winComb[0, 0] * step), ystart + 25 + (winComb[0, 1] * step), 
+                        xstart + 25 + (winComb[2, 0] * step), ystart + 25 + (winComb[2, 1] * step ));
+                    // g.DrawLine(new Pen(Color.Aqua, 3f), xstart + 25 + (winy + winvy) * step, ystart + 25 + (winx + winvx) * step, 
+                    //   xstart + 25 + (winy + 2 * winvy) * step, ystart + 25 + (winx + 2*winvx) * step);
+
+                    ClearMap();
+                    
                     countWin[c-1] += 1;
-                    isPlaying = false;
-                    turn = true;
-                    MessageBox.Show("Победа"+c+" игрока") ;
-                    button1.Text = "Играсть снова";
-                    button1.BackColor = Color.Gold;
+                    MessageBox.Show("Победа "+c+" игрока") ;
                     if (c == 1) textBox1.Text = (countWin[0]).ToString();
                     if (c == 2) textBox2.Text = (countWin[1]).ToString();
 
                 }
             }
+
+            //ничья
+            if (CheckMap())
+            {
+                MessageBox.Show("Нет победителя");
+                ClearMap();
+            }
+        }
+
+        //проверка победы 
+        private static bool CheckWin(int c)
+        {
+            for (var i = 0; i < 3; i++) 
+            {
+                if (CheckLine(0, i, 1, 0, c)) // проверим линию по y
+                {
+                    winx = 0;
+                    winy = i;
+                    winvx = 1;
+                    winvy = 0;
+                    return true;   
+                }
+                if(CheckLine(i, 0, 0, 1, c)) // проверим линию по х 
+                {
+                    winx = i;
+                    winy = 0;
+                    winvx = 0;
+                    winvy = 1;
+                    return true;   
+                }
+            }
+            if (CheckLine(0, 0, 1, 1,  c)) // проверим по диагонали х -у 
+            {
+                winx = 0;
+                winy = 0;
+                winvx = 1;
+                winvy = 1;
+                return true;   
+            }
+            if (CheckLine(0, 2, 1, -1,  c)) // проверим по диагонали х -у 
+            {
+                winx = 0;
+                winy = 2;
+                winvx = 1;
+                winvy = -1;
+                return true;   
+            }
+            return false;
+        }
+        
+        // проверка линии
+        private static bool CheckLine(int x, int y, int vx, int vy, int c)
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                if (littleMap[(y + i * vy), (x + i * vx)] == c)
+                {
+                    winComb[i, 0] = (y + i * vy);
+                    winComb[i, 1] = (x + i * vx);
+                }
+
+                if (littleMap[(y + i * vy), (x + i * vx)] != c) return false; // проверим одинаковые-ли символы в ячейки
+            }
+            return true;
+        }
+        
+        //проверка на пустые клетки(заполненность поля)
+        private static bool CheckMap()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if (littleMap[i, j] == 0) return false;
+                }
+            }
+
+            return true;
+        }
+
+        //Очистить поле, подготовиться к следующей игре 
+        private void ClearMap()
+        {
+             
+            for (var i = 0; i < 3; i++) 
+            {
+                for (var j = 0; j < 3; j++)
+                {
+                    littleMap[i, j] = 0;
+                }
+            }
             
+            isPlaying = false;
+            turn = true;
+            button1.Text = "Играсть снова";
+            button1.BackColor = Color.Gold;
         }
 
         private void Form1_MouseClick(object sender, MouseEventArgs e)
@@ -131,35 +223,6 @@ namespace tictactone3x3
                 
             }
         }
-        
-        private static bool CheckWin(int c)
-        {
-            for (var i = 0; i < 3; i++) 
-            {
-                if (CheckLine(0, i, 1, 0, c)) return true;   // проверим линию по y
-                if(CheckLine(i, 0, 0, 1, c)) return true;   // проверим линию по х 
-            }
-            if (CheckLine(0, 0, 1, 1,  c)) return true;  // проверим по диагонали х -у 
-            if (CheckLine(0, 2, 1, -1,  c)) return true;  // проверим по диагонали х -у 
-            return false;
-        }
-        
-        // проверка линии
-        private static bool CheckLine(int x, int y, int vx, int vy, int c)
-        {
-            for (var i = 0; i < 3; i++)
-            {
-                if (littleMap[(y + i * vy), (x + i * vx)] == c)
-                {
-                    winComb[i, 0] = (y + i * vy);
-                    winComb[i, 1] = (x + i * vx);
-                }
-
-                if (littleMap[(y + i * vy), (x + i * vx)] != c) return false; // проверим одинаковые-ли символы в ячейки
-            }
-            return true;
-        }
-
 
         private void button1_Click(object sender, EventArgs e)
         {
